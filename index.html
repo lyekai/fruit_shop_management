@@ -1203,7 +1203,7 @@
         let currentMode='easy', currentFunds=5000, currentQIndex=0, isAnswered=false;
         let selectedQuestionIds=[], chartData=new Array(30).fill(null), trendChart=null;
         let currentOptionSet=[], pendingMode='easy';
-        const labels=Array.from({length:30},(_,i)=>`Q${i+1}`);
+        const labels=Array.from({length:30},(_,i)=>`D${i+1}`);
         const saveKey=mode=>SAVE_PREFIX+mode;
         function getSave(mode){try{return JSON.parse(localStorage.getItem(saveKey(mode))||'null')}catch(e){return null}}
         function saveGame(){
