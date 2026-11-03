@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍊 果然有學問！</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: #fff8e8 url('/static/image/fruit_1.png') center center / cover fixed no-repeat;
+            color: #243047;
+        }
+        @media (orientation: portrait) and (max-width: 700px) {
+            body { background-image: url('/static/image/fruit_2.png'); background-attachment: scroll; }
+        }
+        /* 主選單外層保持透明；可操作的按鈕保留清楚的外框與底色 */
+        .screen-shade { background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; }
+        .menu-btn { background: rgba(255,250,238,.88) !important; color: #8b3e16 !important; border: 2px solid #d98b43 !important; border-radius: 16px !important; box-shadow: 0 3px 0 rgba(142,78,27,.16) !important; text-shadow: none; transition: transform .15s, background .15s, border-color .15s; }
+        .menu-btn:hover { color: #71300f !important; background: #fff0d2 !important; border-color: #bd6827 !important; transform: translateY(-2px); filter: none; }
+        .menu-btn:active { transform: translateY(0) scale(.99); box-shadow: none !important; }
+        #main-menu button, #mode-screen button { color: #8b3e16 !important; }
+        #main-menu button:not(:focus-visible), #mode-screen button:not(:focus-visible) { outline: none; }
+        #main-menu .text-orange-700, #mode-screen .text-orange-700 { text-shadow: 0 1px 3px rgba(255,255,255,.8); }
+        .game-panel { background:rgba(255,255,255,.91); border:1px solid rgba(255,255,255,.8); box-shadow:0 12px 35px rgba(111,76,32,.16); backdrop-filter:blur(10px); }
+        .spss-table th { background:#eaf4ff !important; color:#155e91 !important; }
+        .spss-table td { color:#334155; }
+        .glass-card { background:rgba(255,255,255,.92); border:1px solid #e7d8b9; backdrop-filter:blur(12px); }
+        .opt-btn { background:rgba(255,255,255,.94) !important; border-color:#d9c9a8 !important; color:#263449 !important; }
+        .opt-btn:hover { background:#fff3d7 !important; border-color:#e99a42 !important; }
+        .opt-btn:disabled { opacity:.72; }
+
+        .overlay { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(30,35,45,.58); }
+        .overlay.show { display:flex; }
+        .overlay-card { width:min(680px,100%); max-height:90vh; overflow:auto; background:#fffaf0; color:#263449; border-radius:24px; padding:28px; box-shadow:0 24px 80px rgba(0,0,0,.3); }
+        .result-hero { font-size:clamp(3rem,10vw,6rem); }
+        #game-screen header, #game-screen footer { color:#263449; }
+        #game-screen header { background:rgba(255,255,255,.91)!important; border-color:#e7d8b9!important; }
+        #game-screen .bg-slate-900\/50 { background:rgba(246,239,224,.9)!important; }
+        #game-screen .bg-slate-800\/60 { background:rgba(255,255,255,.88)!important; }
+        #game-screen .text-slate-400, #game-screen .text-slate-500 { color:#64748b !important; }
+        #game-screen .bg-slate-800\/90, #game-screen .bg-slate-900, #game-screen .bg-slate-950 { background-color:#fff3dc !important; }
+        #game-screen .border-slate-700, #game-screen .border-slate-800 { border-color:#e4d2ae !important; }
+        #game-screen .text-slate-100, #game-screen .text-slate-200, #game-screen .text-slate-300 { color:#334155 !important; }
+        #game-screen .text-sky-400 { color:#1684b9 !important; }
+        #game-screen .text-amber-300 { color:#b96a16 !important; }
+        #game-screen .text-amber-400 { color:#b96a16 !important; }
+        #game-screen .bg-slate-700 { background:#e7e1d5 !important; }
+        /* 遊戲內對話區、報表與方程式採淺底深字，避免深色方框吃掉文字 */
+        #game-screen .bg-slate-800\/90 { background:rgba(255,248,232,.98) !important; border-color:#e5c99e !important; }
+        #game-screen .bg-slate-900 { background:#fff4dc !important; }
+        #game-screen .bg-slate-950 { background:#fff8e9 !important; }
+        #game-screen #question-text { color:#263449 !important; }
+        #game-screen .text-orange-400 { color:#a84d18 !important; }
+        #game-screen #equation-container { color:#8a4b12 !important; background:#fff8e9 !important; border-color:#e5c99e !important; }
+        #game-screen .glass-card { background:rgba(255,252,244,.96) !important; border-color:#e5d2ae !important; }
+        #game-screen .spss-table th { background:#e8f2fb !important; color:#155e91 !important; }
+        #game-screen .spss-table td { background:#fffdf8 !important; color:#263449 !important; }
+        #game-screen #next-btn { background:#b96a25 !important; color:#fff !important; border:1px solid #99531c !important; }
+        #game-screen #next-btn:disabled { opacity:.48; }
+        .spss-table th, .spss-table td {
+            border: 1px solid #475569;
+            padding: 6px 12px;
+            text-align: center;
+        }
+        .spss-table th {
+            background-color: #1e293b;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-6">
+    <audio id="bgm" src="/static/audio/bgm.mp3" loop preload="none"></audio>
+    <section id="main-menu" class="min-h-[85vh] w-full flex items-center justify-center">
+      <div class="screen-shade w-full max-w-xl rounded-[2rem] p-7 md:p-10 text-center shadow-2xl border border-white/80">
+        <div class="text-6xl mb-3">🍎🍊🍇</div>
+        <h1 class="text-4xl md:text-5xl font-black tracking-wide text-orange-700 mb-2">🍊 果然有學問！</h1>
+        <p class="text-orange-900/70 mb-8">水果店統計經營大冒險</p>
+        <div class="max-w-sm mx-auto grid gap-4">
+          <button class="menu-btn rounded-2xl py-4 text-xl font-extrabold" onclick="showModeSelect()">開始遊戲</button>
+          <button class="rounded-2xl py-4 text-lg font-bold bg-white/90 text-orange-800 border-2 border-orange-200 shadow" onclick="openRules()">規則介紹</button>
+        </div>
+        <div id="saved-summary" class="mt-6 text-sm text-orange-900/80"></div>
+      </div>
+    </section>
+    <section id="mode-screen" class="min-h-[85vh] w-full hidden items-center justify-center">
+      <div class="screen-shade w-full max-w-xl rounded-[2rem] p-7 md:p-10 text-center shadow-2xl border border-white/80">
+        <button onclick="showMainMenu()" class="float-left text-orange-800 font-bold">← 返回</button>
+        <div class="clear-both"></div>
+        <h2 class="text-3xl font-black text-orange-700 mb-2">選擇經營難度</h2>
+        <p class="text-orange-900/70 mb-6">每種難度都有獨立的遊戲存檔</p>
+        <div class="grid gap-4">
+          <button class="menu-btn rounded-2xl p-4 text-xl font-extrabold" onclick="chooseMode('easy')">簡單模式<small class="block text-sm font-medium mt-1">維持原本的金錢變化</small></button>
+          <button class="menu-btn rounded-2xl p-4 text-xl font-extrabold" onclick="chooseMode('hard')">困難模式<small class="block text-sm font-medium mt-1">錯誤決策扣款 2 倍</small></button>
+          <button class="menu-btn rounded-2xl p-4 text-xl font-extrabold" onclick="chooseMode('extreme')">超困難模式<small class="block text-sm font-medium mt-1">錯誤扣款 3 倍，正確收益減半</small></button>
+        </div>
+      </div>
+    </section>
+    <div id="rules-overlay" class="overlay" onclick="if(event.target===this)closeOverlay('rules-overlay')">
+      <div class="overlay-card">
+        <button class="float-right text-2xl text-orange-700" onclick="closeOverlay('rules-overlay')">✕</button>
+        <h2 class="text-3xl font-black text-orange-700 mb-4">📖 遊戲規則介紹</h2>
+        <div class="space-y-3 leading-relaxed">
+          <p>🍊 你將接手一家水果店，透過閱讀 M1～M10 統計報表，回答問題並做出經營決策。</p>
+          <p>📊 每個模型單元會從五道題目中隨機抽出三題，題目順序也會隨機排列；每次挑戰都可能遇到不同故事。</p>
+          <p>💰 初始資金為 $5,000。正確決策增加資金，錯誤決策會造成損失；資金降至零或以下，水果店就會倒閉。</p>
+          <p>💾 三種難度分別保存進度。離開遊戲或關閉網頁後，仍可從相同題目與資金狀態繼續。</p>
+          <p>🏆 完成 30 題後，將依照剩餘資金解鎖不同的水果店結局。</p>
+        </div>
+        <button class="menu-btn w-full rounded-xl py-3 mt-6 font-bold" onclick="closeOverlay('rules-overlay')">我知道了</button>
+      </div>
+    </div>
+    <div id="resume-overlay" class="overlay">
+      <div class="overlay-card text-center">
+        <div class="text-5xl mb-3">💾</div><h2 class="text-2xl font-black text-orange-700">發現尚未完成的遊戲</h2>
+        <p id="resume-description" class="my-4"></p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <button class="menu-btn rounded-xl py-3 font-bold" onclick="resumeSavedGame()">繼續遊戲</button>
+          <button class="rounded-xl py-3 font-bold bg-white border-2 border-orange-200 text-orange-800" onclick="startFreshGame()">重新開始</button>
+        </div>
+      </div>
+    </div>
+    <div id="result-overlay" class="overlay">
+      <div class="overlay-card text-center">
+        <div id="result-emoji" class="result-hero">🏆</div>
+        <h2 id="result-title" class="text-3xl font-black text-orange-700 mb-2"></h2>
+        <p id="result-story" class="text-lg leading-relaxed my-4"></p>
+        <div class="rounded-2xl bg-orange-100 p-4 my-5"><div class="text-sm text-orange-800">最終剩餘資金</div><div id="result-funds" class="text-4xl font-black text-orange-700"></div><div id="result-mode" class="text-sm text-orange-800 mt-1"></div></div>
+        <div class="grid sm:grid-cols-2 gap-3"><button class="menu-btn rounded-xl py-3 font-bold" onclick="replayCurrentMode()">再挑戰一次</button><button class="rounded-xl py-3 font-bold bg-white border-2 border-orange-200 text-orange-800" onclick="returnToMenu()">返回主畫面</button></div>
+      </div>
+    </div>
+
+    <div id="game-screen" class="hidden">
+    <!-- Header Section -->
+    <header class="max-w-6xl w-full mx-auto flex flex-col md:flex-row justify-between items-center bg-slate-800/80 p-4 rounded-xl border border-slate-700 shadow-lg mb-4 gap-4">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <button onclick="backToModes()" aria-label="返回上一頁" title="返回上一頁" class="shrink-0 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-800 px-3 py-2 text-xl">⌂</button>
+            <span class="text-3xl">🍊</span>
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                    果然有學問！
+                </h1>
+                <p class="text-xs text-slate-400">M1~M10 階層迴歸與經營決策模擬器</p>
+            </div>
+        </div>
+        
+        <!-- Status & Funds Indicator -->
+        <div class="flex items-center gap-6">
+            <div class="text-right">
+                <div class="text-xs text-slate-400">目前進度</div>
+                <div class="text-lg font-semibold text-sky-400" id="progress-text">Q1 / 30</div>
+            </div>
+            <div class="bg-slate-900 border border-amber-500/30 px-5 py-2 rounded-lg text-right min-w-[150px]">
+                <div class="text-xs text-amber-400 font-medium">每月營業額 (可用資金)</div>
+                <div class="text-2xl font-black text-amber-300" id="funds-display">$5,000</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 mb-4 flex-grow">
+        
+        <!-- Left Column: Report & Equation (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+            <div class="glass-card p-5 rounded-xl border border-slate-700 shadow-xl flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider bg-sky-950 text-sky-400 border border-sky-800 px-2.5 py-1 rounded">
+                        SPSS 迴歸分析報表
+                    </span>
+                    <span class="text-xs text-slate-400" id="model-tag">模型 M1</span>
+                </div>
+
+                <!-- SPSS Table Display Area -->
+                <div class="overflow-x-auto my-auto py-2">
+                    <div id="report-container">
+                        <!-- Table rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Equation & Footnote -->
+                <div class="mt-auto pt-3 border-t border-slate-700">
+                    <div class="text-xs text-slate-400 mb-1">迴歸估計方程式：</div>
+                    <div id="equation-container" class="bg-slate-950 p-2.5 rounded font-mono text-xs text-amber-300 leading-relaxed overflow-x-auto border border-slate-800">
+                        <!-- Equation rendered via JS -->
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-2 italic text-right">* 表格內的迴歸係數為標準化 β 係數</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Question & Interaction (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col">
+            <div class="glass-card p-6 rounded-xl border border-slate-700 shadow-xl flex-grow flex flex-col justify-between">
+                
+                <!-- Dialogue Box -->
+                <div>
+                    <div class="flex items-start gap-4 bg-slate-800/90 p-4 rounded-xl border border-slate-700 mb-6">
+                        <div class="text-4xl p-2 bg-slate-900 rounded-lg border border-slate-700 shadow-inner">🧑‍🌾</div>
+                        <div class="flex-1">
+                            <div class="text-xs text-orange-400 font-semibold mb-1">資深店員對話</div>
+                            <div class="text-slate-100 font-medium leading-relaxed" id="question-text">
+                                載入問題中...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options Grid -->
+                    <div class="grid grid-cols-1 gap-3" id="options-container">
+                        <!-- Options rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="feedback-box" class="hidden mt-4 p-3 rounded-lg border text-sm font-medium transition-all">
+                    <!-- Feedback content -->
+                </div>
+
+                <!-- Action Button -->
+                <div class="mt-6 flex justify-end">
+                    <button id="next-btn" onclick="nextQuestion()" disabled class="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition-all">
+                        下一題 →
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Section: Stock Trend Chart -->
+    <footer class="max-w-6xl w-full mx-auto glass-card p-4 rounded-xl border border-slate-700 shadow-xl">
+        <div class="flex justify-between items-center mb-2 px-2">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <span>📈</span> 30日 營業額趨勢圖 (現有資產)
+            </h3>
+            <span class="text-xs text-slate-500">警戒線: $0 (倒店)</span>
+        </div>
+        <div class="h-32 w-full">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </footer>
+    </div><!-- /game-screen -->
+
+    <script>
+        // M1 Table Generator Component
+        function renderM1Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-sky-500">依變項：顧客來店意願 (Me)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>M1 β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.15</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.29**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.17*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.16*</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // M2 Table Generator Component
+        function renderM2Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-sky-500">依變項：顧客來店意願 (Me)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>M2 β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.13</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.32**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.19*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.15*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.48**</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // M3 Table Generator Component
+        function renderM3Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-sky-500">依變項：顧客來店意願 (Me)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>M3 β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.17</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.35**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.13*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.17*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.45**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">調節變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Mo：市場競爭程度</td>
+                            <td class="font-mono text-slate-400">-0.18</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // M4 Table Generator Component
+        function renderM4Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-sky-500">依變項：顧客來店意願 (Me)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>M4 β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.21</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.33**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.15*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.19*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.42**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">調節變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Mo：市場競爭程度</td>
+                            <td class="font-mono text-slate-400">-0.18</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">交互作用項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-purple-300">XMo：廣告與促銷投入 × 市場競爭程度</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.25**</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // M5 Table Generator Component
+        function renderM5Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-emerald-500">依變項：每月營業額 (Y)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>M5 β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.27</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.37**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.25*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.15*</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Q16-Q18 Table Generator Component
+        function renderQ16Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-sky-500">依變項：顧客來店意願 (Me)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.26</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.34**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.23*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.19*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.37**</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Q19-Q21 Table Generator Component (M7 Model)
+        function renderQ19Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-emerald-500">依變項：每月營業額 (Y)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.16</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.27**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.13*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.18*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.35**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">中介變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Me：顧客來店意願</td>
+                            <td class="font-mono text-sky-300 font-bold">0.25*</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Q22-Q24 Table Generator Component (M8 Model)
+        function renderQ22Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-emerald-500">依變項：每月營業額 (Y)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.21</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.32**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.19*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.16*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.30**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">調節變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Mo：市場競爭程度</td>
+                            <td class="font-mono text-sky-300">-0.15</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Q25-Q27 Table Generator Component (M9 Model)
+        function renderQ25Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-emerald-500">依變項：每月營業額 (Y)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.23</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.28**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.18*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.16*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.28**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">調節變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Mo：市場競爭程度</td>
+                            <td class="font-mono text-sky-300">-0.18</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">交互作用項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-purple-300">XMo：廣告與促銷投入 × 市場競爭程度</td>
+                            <td class="font-mono text-rose-400">-0.11</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Q28-Q30 Table Generator Component (M10 Model)
+        function renderQ28Table() {
+            return `
+                <table class="spss-table w-full text-xs">
+                    <thead>
+                        <tr>
+                            <th colspan="2" class="text-left bg-slate-900 border-b-2 border-emerald-500">依變項：每月營業額 (Y)</th>
+                        </tr>
+                        <tr>
+                            <th class="text-left">預測變項</th>
+                            <th>β</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">控制變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C1：店面位置</td>
+                            <td class="font-mono">0.19</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C2：水果品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.25**</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C3：商品價格</td>
+                            <td class="font-mono text-rose-400 font-bold">-0.21*</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-slate-300">C4：員工服務品質</td>
+                            <td class="font-mono text-emerald-400 font-bold">0.17*</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">前因變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-amber-300">X：廣告與促銷投入</td>
+                            <td class="font-mono text-amber-300 font-bold">0.31**</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">調節變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-sky-300">Mo：市場競爭程度</td>
+                            <td class="font-mono text-sky-300">-0.20</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">交互作用項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-purple-300">XMo：廣告與促銷投入 × 市場競爭程度</td>
+                            <td class="font-mono text-rose-400">-0.13</td>
+                        </tr>
+                        <tr class="bg-slate-900/50 font-bold text-slate-400">
+                            <td class="text-left" colspan="2">中介變項</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left pl-4 text-emerald-300">Me：顧客來店意願</td>
+                            <td class="font-mono text-emerald-300 font-bold">0.25*</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Helper function for random bounds calculation
+        function getRandomVal(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Questions Data Set (Q1 ~ Q30)
+        const questions = [
+            // Q1
+            {
+                modelTag: "模型 M1",
+                renderTable: renderM1Table,
+                eqText: "Me = β₀ + e",
+                question: "最近業績不錯！一起看看上個月的報表吧，顧客很在意水果的品質，對於下個月的策略有什麼建議嗎？",
+                options: [
+                    { text: "加強產線對於瑕疵品的挑選", getImpact: () => getRandomVal(2000, 3000) },
+                    { text: "外觀較差的水果打折優惠", getImpact: () => -getRandomVal(1000, 1500) },
+                    { text: "增強店內採光", getImpact: () => -getRandomVal(0, 1000) },
+                    { text: "舉辦試吃活動", getImpact: () => getRandomVal(0, 500) }
+                ]
+            },
+            // Q2
+            {
+                modelTag: "模型 M1",
+                renderTable: renderM1Table,
+                eqText: "Me = β₀ + e",
+                question: "老闆我看不懂這個，你能告訴我「員工服務品質」有多重要嘛？",
+                options: [
+                    { text: "不重要！星星越多表示越不重要", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "0.16表示顧客來店意願有16%受它影響", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "有顯著相關，且P-value < 0.01", getImpact: () => -getRandomVal(0, 500) },
+                    { text: "有顯著相關，且P-value < 0.05", getImpact: () => getRandomVal(1500, 2000) }
+                ]
+            },
+            // Q3
+            {
+                modelTag: "模型 M1",
+                renderTable: renderM1Table,
+                eqText: "Me = β₀ + e",
+                question: "下個月關於價格的部分，有什麼調整或建議？",
+                options: [
+                    { text: "水果包裝成精美禮盒，然後賣超貴", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "使用成本更高的進口水果", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "消費滿500元玩一次打折摸彩箱", getImpact: () => getRandomVal(2000, 3000) },
+                    { text: "外觀NG水果半價", getImpact: () => getRandomVal(0, 1000) }
+                ]
+            },
+            // Q4
+            {
+                modelTag: "模型 M2",
+                renderTable: renderM2Table,
+                eqText: "Me = β₁₀ + β₁₁X + e<br>Me = β₁₀ + 0.48X + e",
+                question: "多虧有你的幫忙，水果店上個月賺翻啦！關於打廣告的部分，想聽聽你的意見",
+                options: [
+                    { text: "廣告完全沒用，應全面撤除以降低成本", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "不好不壞，維持原樣", getImpact: () => 0 },
+                    { text: "鎖定婆婆媽媽族群發傳單", getImpact: () => getRandomVal(4000, 5000) },
+                    { text: "拍攝獵奇廣告影片吸引年輕族群", getImpact: () => getRandomVal(500, 1000) }
+                ]
+            },
+            // Q5
+            {
+                modelTag: "模型 M2",
+                renderTable: renderM2Table,
+                eqText: "Me = β₁₀ + β₁₁X + e<br>Me = β₁₀ + 0.48X + e",
+                question: "老闆！在 M2 報表中，前因變項『廣告與促銷投入 (X)』的係數為 0.48**，請告訴我這兩顆星 (**) 標註的 p-value 代表什麼統計意涵？",
+                options: [
+                    { text: "若廣告與來店意願無關，我們抽樣能抽到如此顯著結果的機率 p-value < 0.01", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "代表廣告投入能直接提高 48% 的每月營業額 (p-value = 0.48)", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "兩顆星是指 p-value < 0.05，代表結果勉強達到統計顯著", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "代表廣告投入與顧客來店意願完全無關 (p-value > 0.05)", getImpact: () => -getRandomVal(3000, 4000) }
+                ]
+            },
+            // Q6
+            {
+                modelTag: "模型 M2",
+                renderTable: renderM2Table,
+                eqText: "Me = β₁₀ + β₁₁X + e<br>Me = β₁₀ + 0.48X + e",
+                question: "既然廣告那麼有效，那下週店裡的廣告就交給你設計啦！",
+                options: [
+                    { text: "分析痛點，了解顧客需求", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "加入大量專有名詞，看起來更專業", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "製造爭議引起關注", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "廣撒網無差別投放", getImpact: () => -getRandomVal(0, 1000) }
+                ]
+            },
+            // Q7
+            {
+                modelTag: "模型 M3",
+                renderTable: renderM3Table,
+                eqText: "Me = β₂₀ + β₂₁X + β₂₂Mo + e<br>Me = β₂₀ + 0.45X - 0.18Mo + e",
+                question: "謝謝你！廣告的效果太好了，這個月要來分析我們的競爭對手，你認為「市場競爭程度」是否顯著影響「顧客來店意願」？",
+                options: [
+                    { text: "有！而且P-value < 0.05", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "係數是負的表示會嚴重影響來店意願", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "沒有顯著影響，但不可輕忽", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "沒有顯著影響，可以姑且不管", getImpact: () => getRandomVal(0, 1000) }
+                ]
+            },
+            // Q8
+            {
+                modelTag: "模型 M3",
+                renderTable: renderM3Table,
+                eqText: "Me = β₂₀ + β₂₁X + β₂₂Mo + e<br>Me = β₂₀ + 0.45X - 0.18Mo + e",
+                question: "你是否會建議我們水果店遷移店面位置？",
+                options: [
+                    { text: "維持原樣就好，錢省下來", getImpact: () => 0 },
+                    { text: "搬到人少的郊區，遠離其他同行對手", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "搬到人流多的超市旁邊", getImpact: () => getRandomVal(0, 1000) },
+                    { text: "維持原樣就好，錢拿去打廣告", getImpact: () => getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q9
+            {
+                modelTag: "模型 M3",
+                renderTable: renderM3Table,
+                eqText: "Me = β₂₀ + β₂₁X + β₂₂Mo + e<br>Me = β₂₀ + 0.45X - 0.18Mo + e",
+                question: "店長，我們這個月的目標是提升顧客來店意願，你能從報表結果想一個最有效的方法嗎？",
+                options: [
+                    { text: "拍攝業配廣告", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "使用AI自動結帳機", getImpact: () => getRandomVal(500, 1000) },
+                    { text: "買水果折抵停車費", getImpact: () => getRandomVal(500, 1000) },
+                    { text: "與附近同行聯辦集點卡活動", getImpact: () => getRandomVal(1000, 2000) }
+                ]
+            },
+            // Q10
+            {
+                modelTag: "模型 M4",
+                renderTable: renderM4Table,
+                eqText: "Me = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Me = β₃₀ + 0.42X - 0.18Mo - 0.25XMo + e",
+                question: "老闆！加入交互作用項 XMo 後，它的係數是 -0.25**，請問這顆『**』星星在統計學上的 p-value 代表什麼意思？",
+                options: [
+                    { text: "代表如果假設事實上沒有相關，抽樣卻抽到顯著相關的機率 p-value < 0.01", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "代表有 25% 的顧客會因為市場競爭而完全不來消費 (p-value = 0.25)", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "代表兩顆星是指 p-value < 0.05，代表顯著性普通", getImpact: () => -getRandomVal(1000, 2000) },
+                    { text: "代表此變項對模型完全沒有影響力 (p-value > 0.05)", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q11
+            {
+                modelTag: "模型 M4",
+                renderTable: renderM4Table,
+                eqText: "Me = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Me = β₃₀ + 0.42X - 0.18Mo - 0.25XMo + e",
+                question: "報表顯示交互作用項 XMo 顯著為負 (-0.25**)，代表『當市場競爭激烈時，打廣告的效果會被削弱』！面對高競爭環境，我們該如何調整策略？",
+                options: [
+                    { text: "轉向精準客群行銷與在地深耕，避免與對手盲目硬碰硬砸廣告", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "對手越強我們越要狂砸雙倍預算打電視廣告", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "全面放棄打廣告，改為全店商品打折半價出清", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "不理會市場競爭，持續維持原有的廣告投放節奏", getImpact: () => getRandomVal(0, 1000) }
+                ]
+            },
+            // Q12
+            {
+                modelTag: "模型 M4",
+                renderTable: renderM4Table,
+                eqText: "Me = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Me = β₃₀ + 0.42X - 0.18Mo - 0.25XMo + e",
+                question: "根據 M4 報表，當市場競爭 Mo 很高時，前因變項 X (廣告投入) 帶來的顧客來店意願邊際效應會下降。那我們該如何強化基本盤？",
+                options: [
+                    { text: "鞏固水果品質 (C2: 0.33**) 與服務品質 (C4: 0.19**) 提升顧客黏著度", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "忽視水果品質，把所有資金拿去打官司控告同行競爭", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "調高商品價格 (C3)，希望能從少數顧客身上撈回成本", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "將店面搬遷至遙遠郊區 (C1)", getImpact: () => -getRandomVal(1000, 2000) }
+                ]
+            },
+            // Q13
+            {
+                modelTag: "模型 M5",
+                renderTable: renderM5Table,
+                eqText: "Y = β₁₀ + e<br>Y = β₁₀ + e",
+                question: "老闆！從 M5 開始我們要正式預測依變項『每月營業額 (Y)』了！觀察 M5 的控制變項報表，哪一個變項對營業額的正向影響力最強大？",
+                options: [
+                    { text: "水果品質 (C2: 0.37**)，我們應優先提升頂級水果的進貨比重", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "商品價格 (C3: -0.25*)，價格越高營業額就會越高", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "店面位置 (C1: 0.27)，因為它的係數最大且達到極顯著", getImpact: () => -getRandomVal(1000, 2000) },
+                    { text: "員工服務品質 (C4: 0.15*)，應把所有資源拿去招募禮儀小姐", getImpact: () => getRandomVal(0, 1000) }
+                ]
+            },
+            // Q14
+            {
+                modelTag: "模型 M5",
+                renderTable: renderM5Table,
+                eqText: "Y = β₁₀ + e<br>Y = β₁₀ + e",
+                question: "在 M5 中，『商品價格 (C3)』的迴歸係數為 -0.25* (p < 0.05)，顯著為負。這代表高單價會顯著壓抑總營業額！針對價格策略該如何改進？",
+                options: [
+                    { text: "推行組合促銷與薄利多銷策略，降低顧客對單一高價的抗拒感", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "全面翻倍調高價格，希望透過暴利快速補足營業額", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "完全無視價格影響，維持極高單價並縮減促銷活動", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "將所有水果改為免費贈送，衝高銷售數量", getImpact: () => -getRandomVal(3000, 4000) }
+                ]
+            },
+            // Q15
+            {
+                modelTag: "模型 M5",
+                renderTable: renderM5Table,
+                eqText: "Y = β₁₀ + e<br>Y = β₁₀ + e",
+                question: "觀察 M5 報表，『員工服務品質 (C4)』呈現顯著正向影響 (0.15*)。若希望在不大量增加固定成本的前提下改善服務績效，最合理的策略是？",
+                options: [
+                    { text: "建立明確的招呼與售後服務 SOP，提升店員專業態度與服務效率", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "花費數百萬元聘請高薪外賓招待員", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "要求店員對顧客採取高壓推銷，強迫顧客加購水果", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "服務品質對營業額不重要，應裁撤半數服務人員", getImpact: () => -getRandomVal(1000, 2000) }
+                ]
+            },
+            // Q16
+            {
+                modelTag: "模型 M6",
+                renderTable: renderQ16Table,
+                eqText: "Y = β₁₀ + β₁₁X + e<br>Y = β₁₀ + 0.37X + e",
+                question: "老闆！在這張報表中，前因變項『廣告與促銷投入 (X)』的迴歸係數 β₁₁ = 0.37**，請問它代表什麼重要的統計概念？",
+                options: [
+                    { text: "這是 X 直接預測 Y 的總效果 (Total Effect)，代表廣告對整體營業額的綜合影響力", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "這是純粹的中介效果點估計值，不包含任何直接影響", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "這代表控制變項完全失效，模型發生嚴重偏誤", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "這代表市場競爭程度過高所產生的負向調節係數", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q17
+            {
+                modelTag: "模型 M6",
+                renderTable: renderQ16Table,
+                eqText: "Y = β₁₀ + β₁₁X + e<br>Y = β₁₀ + 0.37X + e",
+                question: "呼~還好 0.37 是顯著的，如果不顯著的話，根據某人的理論，中介變項就沒有效了呢！",
+                options: [
+                    { text: "Baron & Kenny", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "Mackinnon", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "Hattie & Timberly", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "Larry Selinker", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q18
+            {
+                modelTag: "模型 M6",
+                renderTable: renderQ16Table,
+                eqText: "Y = β₁₀ + β₁₁X + e<br>Y = β₁₀ + 0.37X + e",
+                question: "從 M6 報表得知總效果 β₁₁ = 0.37** 且顯著，同時水果品質 (C2: 0.34**) 表現亮眼。為了最大化總營業額 (Y)，下階段的行銷與營運資源應如何分配？",
+                options: [
+                    { text: "維持高水準的廣告投入 (0.37)，並同步主打優質水果品質 (0.34) 雙管齊下", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "全面刪減廣告預算，因為總效果不重要", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "大幅提高商品價格 (C3: -0.23*) 來抵銷廣告成本", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "把店面遷至偏遠地區以降低租金支出", getImpact: () => -getRandomVal(1000, 2000) }
+                ]
+            },
+            // Q19
+            {
+                modelTag: "模型 M7",
+                renderTable: renderQ19Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Me + e<br>Y = β₂₀ + 0.35X + 0.25Me + e",
+                question: "在 M7 模型中，β₃₁ = 0.35 是 X 對 Y 的獨立影響，扣除中介變項後直接對 Y 產生的作用，在統計學上稱為什麼？",
+                options: [
+                    { text: "直接效果 (Direct Effect)", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "間接效果 (Indirect Effect)", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "總效果 (Total Effect)", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "交互作用項 (Interaction Term)", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q20
+            {
+                modelTag: "模型 M7",
+                renderTable: renderQ19Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Me + e<br>Y = β₂₀ + 0.35X + 0.25Me + e",
+                question: "X 直接影響 Me 的係數 × Me 直接影響 Y 的係數 (即 X → Me → Y，路徑係數的乘積)，在計量模型中稱為？",
+                options: [
+                    { text: "間接效果 (Indirect Effect)", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "直接效果 (Direct Effect)", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "控制變項殘差 (Control Residual)", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "整體解釋力 R 平方", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q21
+            {
+                modelTag: "模型 M7",
+                renderTable: renderQ19Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Me + e<br>Y = β₂₀ + 0.35X + 0.25Me + e",
+                question: "關於中介效果的計量恆等式，正確的公式組合是：總效果 (Total Effect) 等於？",
+                options: [
+                    { text: "直接效果 + 間接效果", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "直接效果 - 間接效果", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "直接效果 × 間接效果", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "直接效果 ÷ 間接效果", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q22 (New: M8 Model - Regulation Main Effect)
+            {
+                modelTag: "模型 M8",
+                renderTable: renderQ22Table,
+                eqText: "Y = β₂₀ + β₂₁X + β₂₂Mo + e<br>Y = β₂₀ + 0.3X - 0.15Mo + e",
+                question: "老闆！在 M8 報表中，加入了調節變項『市場競爭程度 (Mo)』來共同預測營業額 (Y)，其係數為 -0.15。這代表市場競爭對每月營業額的直接影響為何？",
+                options: [
+                    { text: "市場競爭程度對每月營業額呈現負向主效果，競爭越激烈營業額傾向越低", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "市場競爭越激烈，營業額會呈現等比例爆發性成長", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "市場競爭對營業額完全沒有任何影響，係數可直接忽略", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "這代表廣告預算應該立刻加倍投入以克服競爭", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q23 (New: M8 Advertising Effect Decision)
+            {
+                modelTag: "模型 M8",
+                renderTable: renderQ22Table,
+                eqText: "Y = β₂₀ + β₂₁X + β₂₂Mo + e<br>Y = β₂₀ + 0.3X - 0.15Mo + e",
+                question: "在 M8 中，前因變項『廣告與促銷投入 (X)』的係數為 0.30**，顯著為正。面對此結果，我們在下個月的行銷預算上該採取什麼行動？",
+                options: [
+                    { text: "持續穩健投入廣告促銷 (0.30**)，以確保營業額的穩定成長", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "全面刪減廣告預算，因為廣告係數小於 0.5 不符合效益", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "將所有行銷預算轉移至店面租金投資上", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "完全解僱行銷部門員工以節省人事成本", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q24 (New: M8 Quality Control Strategy)
+            {
+                modelTag: "模型 M8",
+                renderTable: renderQ22Table,
+                eqText: "Y = β₂₀ + β₂₁X + β₂₂Mo + e<br>Y = β₂₀ + 0.3X - 0.15Mo + e",
+                question: "觀察 M8 報表中的控制變項，『水果品質 (C2)』高達 0.32**。這代表在考慮廣告與市場競爭後，品質依然是關鍵防線。我們該落實什麼策略？",
+                options: [
+                    { text: "嚴格把關水果進貨來源與新鮮度，確保頂級水果供應無虞", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "採購大量便宜但容易腐爛的滯銷水果來降低成本", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "放棄品質管理，將所有精力投入價格戰", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "將店內所有水果全面冷凍保存以延長販售期限", getImpact: () => -getRandomVal(1000, 2000) }
+                ]
+            },
+            // Q25 (New: M9 Model - Interaction Term Evaluation)
+            {
+                modelTag: "模型 M9",
+                renderTable: renderQ25Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Y = β₃₀ + 0.28X - 0.18Mo - 0.11XMo + e",
+                question: "老闆！在 M9 模型中加入了交互作用項 XMo（係數 -0.11），請問這代表廣告效果會受到什麼因素的調節？",
+                options: [
+                    { text: "當市場競爭程度 (Mo) 較高時，廣告與促銷投入 (X) 對營業額的邊際正向效果會被微幅削弱", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "市場競爭會完全消滅廣告的所有效果，使廣告變成負數", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "市場競爭程度會使廣告效果加倍放大", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "交互作用項係數為負代表控制變項發生共線失效", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q26 (New: M9 Competitive Strategy)
+            {
+                modelTag: "模型 M9",
+                renderTable: renderQ25Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Y = β₃₀ + 0.28X - 0.18Mo - 0.11XMo + e",
+                question: "根據 M9 報表，調節變項 Mo 係數為 -0.18，交互作用項 XMo 係數為 -0.11。面對激烈競爭環境，店長您會建議採取哪種行銷策略？",
+                options: [
+                    { text: "避開與同業的盲目價格亂戰，轉向精準口碑行銷與特色小眾水果推廣", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "不管競爭對手有多強，盲目加碼三倍電視廣告預算", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "全面調高所有商品價格，期望把競爭對手客源全數趕走", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "裁撤所有行銷團隊，完全放棄對外曝光宣傳", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q27 (New: M9 Price Control Strategy)
+            {
+                modelTag: "模型 M9",
+                renderTable: renderQ25Table,
+                eqText: "Y = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e<br>Y = β₃₀ + 0.28X - 0.18Mo - 0.11XMo + e",
+                question: "在 M9 綜合調節模型中，商品價格 (C3) 係數維持顯著為負 (-0.18*)。為了在競爭市場中站穩腳步，價格設定上應如何調整？",
+                options: [
+                    { text: "設計透明且具性價比的定價與會員折扣方案，降低顧客價格抗拒感", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "隨意喊價，遇到不懂行情的顧客就收取高價", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "將所有水果價格調高兩倍以提升單店奢華感", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "完全不標價，讓顧客隨喜樂捐付費", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q28 (New: M10 Model - Full Integration Strategy)
+            {
+                modelTag: "模型 M10",
+                renderTable: renderQ28Table,
+                eqText: "Y = β₄₀ + 0.13X + 0.23Mo + (-0.09)XMo + (-0.17)Me + e",
+                question: "老闆！我們來到了最後的終極模型 M10，將前因、調節、交互作用與中介變項『顧客來店意願 (Me)』全部納入模型進行綜合預測！請問中介變項 Me 的係數為 0.25*，這代表？",
+                options: [
+                    { text: "顧客的來店意願對每月營業額具有顯著的正向直接影響，提升來店意願是營收成長的關鍵引擎", getImpact: () => getRandomVal(3000, 4000) },
+                    { text: "顧客來店意願對營業額毫無幫助，應將其從經營指標中刪除", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "中介變項的顯著性代表控制變項出現了嚴重統計共線性", getImpact: () => -getRandomVal(2000, 3000) },
+                    { text: "這代表廣告完全被中介變項取代，不需要再做促銷了", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            },
+            // Q29 (New: M10 Comprehensive Execution)
+            {
+                modelTag: "模型 M10",
+                renderTable: renderQ28Table,
+                eqText: "Y = β₄₀ + 0.13X + 0.23Mo + (-0.09)XMo + (-0.17)Me + e",
+                question: "在 M10 終極模型中，廣告投入 (X: 0.31**) 與水果品質 (C2: 0.25**) 依然扮演強大的正向驅動力。身為總店長，您對下階段的營運方針做出的最終指示是？",
+                options: [
+                    { text: "全面落實大數據決策：精準投放廣告行銷，並以最高標準嚴格控管水果品質與顧客服務", getImpact: () => getRandomVal(4000, 5000) },
+                    { text: "解散所有管理團隊，讓水果店完全處於無人自動化自生自滅狀態", getImpact: () => -getRandomVal(4000, 5000) },
+                    { text: "將所有資金一次性全數押在單一高風險的宣傳活動上", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "忽略所有的統計報表結果，憑個人直覺隨性經營", getImpact: () => -getRandomVal(3000, 4000) }
+                ]
+            },
+            // Q30 (New: M10 Grand Finale)
+            {
+                modelTag: "模型 M10",
+                renderTable: renderQ28Table,
+                eqText: "Y = β₄₀ + 0.13X + 0.23Mo + (-0.09)XMo + (-0.17)Me + e",
+                question: "太棒了！我們完成了全部 30 個階層迴歸分析模型與經營考驗。透過這一整套實證數據導向的管理，您對這家水果店未來的發展有何最終期許？",
+                options: [
+                    { text: "堅持以數據科學與統計模型為本，帶領水果店成為全台最具規模的連鎖霸主！", getImpact: () => getRandomVal(5000, 8000) },
+                    { text: "把所有報表通通燒毀，明天開始關門大吉旅遊去", getImpact: () => -getRandomVal(4000, 5000) },
+                    { text: "將店面改為倉庫，不再對外營業販售", getImpact: () => -getRandomVal(3000, 4000) },
+                    { text: "放棄科學管理，改行去夜市擺攤賣炸雞", getImpact: () => -getRandomVal(2000, 3000) }
+                ]
+            }
+        ];
+
+        // 十個單元各自新增：一題 p-value、一題故事型經營決策。
+        const extraQuestions = [
+          {unit:1,kind:'p',question:'早晨盤點時，店員阿晴發現報表中的水果品質係數旁有星號。她擔心星號是不是代表水果有瑕疵；你會怎麼向她解釋 p-value？',options:[['星號表示在虛無假設成立時，觀察到目前或更極端結果的機率很小',3000,4000],['星號表示水果有星級認證',-2000,-3000],['p-value 就是水果品質提升的百分比',-1500,-2500],['p-value 越大代表結果越顯著',-2000,-3000]]},
+          {unit:1,kind:'biz',question:'週末試吃活動後，熟客說最近水果品質穩定、願意常來。報表也顯示品質與來店意願呈正向關係，老闆問你下一步怎麼做？',options:[['建立進貨驗收與每日新鮮度檢查流程',3000,4000],['改買最便宜且來源不明的水果',-2500,-3500],['取消品質檢查，把預算全用在裝潢',-2000,-3000],['不理會回饋，所有水果混在一起販售',-1500,-2500]]},
+          {unit:2,kind:'p',question:'老闆看見廣告係數旁有兩顆星，興奮地說：「所以廣告一定能讓營業額增加 99%！」你要如何解釋顯著性？',options:[['兩顆星代表 p-value 通常小於 .01，並非效果大小或成功機率',3000,4000],['兩顆星代表營業額增加 99%',-2500,-3500],['p-value 是廣告費占營收的比例',-2000,-3000],['顯著就代表每位顧客都會被廣告吸引',-1500,-2500]]},
+          {unit:2,kind:'biz',question:'新開幕的水果店想讓附近居民知道店址。報表顯示廣告投入和來店意願有正向關係，老闆只有有限預算，你會怎麼安排？',options:[['先鎖定附近家庭與常客族群，測試傳單及社群廣告成效',3000,4000],['把所有預算投給完全不相關的廣告受眾',-2500,-3500],['立刻停止所有宣傳',-2000,-3000],['不設定對象，隨機大量發送廣告',-1000,-2000]]},
+          {unit:3,kind:'p',question:'競爭程度的係數沒有星號，店員小林卻說：「沒有顯著就證明競爭完全沒影響。」這樣解讀正確嗎？',options:[['不正確；目前證據不足以拒絕虛無假設，不等於證明效果必定為零',3000,4000],['正確；不顯著就是效果絕對為零',-2500,-3500],['正確；不顯著代表競爭會帶來正向效果',-2000,-3000],['不顯著表示樣本數一定太大',-1000,-2000]]},
+          {unit:3,kind:'biz',question:'隔壁超市開始販售水果，附近競爭變得激烈。店員提議直接把店面搬到郊區避開對手，但報表沒有顯示競爭程度有顯著影響，你會怎麼做？',options:[['先觀察客流與顧客需求，強化特色商品，不貿然搬遷',3000,4000],['立刻花大錢搬到沒有客人的地方',-3000,-4000],['完全不做市場觀察',-1500,-2500],['把所有商品價格提高一倍',-2000,-3000]]},
+          {unit:4,kind:'p',question:'促銷效果在高競爭市場中似乎變弱，交互作用項旁有星號。店員問這個星號在說什麼？',options:[['交互作用項有統計顯著證據，表示廣告效果會隨競爭程度改變',3000,4000],['代表競爭者數量增加了星號所示的百分比',-2000,-3000],['代表廣告對所有顧客都沒有作用',-2500,-3500],['代表模型的每個係數都顯著',-1500,-2500]]},
+          {unit:4,kind:'biz',question:'附近新開兩家水果攤，廣告雖然有效，但競爭越激烈，廣告的邊際效果越弱。老闆問你如何守住客源？',options:[['把廣告聚焦在熟客回購與店家特色，並提升品質及服務',3000,4000],['不管市場狀況，無上限增加廣告費',-3000,-4000],['停止所有行銷並降低品質',-2500,-3500],['只靠全面削價，不管成本',-2000,-3000]]},
+          {unit:5,kind:'p',question:'新進員工看到水果品質係數旁有星號，問：「這是不是代表品質造成營業額變動的機率有 95%？」你會怎麼回答？',options:[['不是；p-value 是在虛無假設下觀察到此結果或更極端結果的機率',3000,4000],['是；p-value 就是因果成立機率',-2500,-3500],['是；星號代表係數乘以 95%',-2000,-3000],['不是；星號只代表樣本數很多',-1000,-2000]]},
+          {unit:5,kind:'biz',question:'最近有顧客抱怨水果不夠新鮮，報表顯示品質與營業額正向關聯。你會如何向老闆提出改善方案？',options:[['調整進貨頻率、加強冷藏與每日淘汰瑕疵品',3000,4000],['為了省錢延長水果上架時間',-2500,-3500],['只更換招牌，不處理品質',-1500,-2500],['大量購入即期水果並混入新貨',-3000,-4000]]},
+          {unit:6,kind:'p',question:'廣告總效果達顯著，老闆認為這就代表每一條廣告都一定賺錢。統計結果能支持這種說法嗎？',options:[['不能；顯著的平均關聯不保證每次活動都獲利',3000,4000],['能；顯著代表每次投放都成功',-2500,-3500],['能；p-value 就是投資報酬率',-2000,-3000],['不能；顯著結果沒有任何參考價值',-1500,-2500]]},
+          {unit:6,kind:'biz',question:'水果店準備迎接中秋節，過去報表顯示廣告投入與營業額有正向關係。老闆想一次砸下全部預算，你會怎麼建議？',options:[['分階段投放並追蹤各渠道成效，保留營運周轉金',3000,4000],['把所有現金押在單一網紅合作',-3000,-4000],['完全不宣傳，等待顧客自己上門',-1500,-2500],['不看成效，只挑最貴的廣告',-2000,-3000]]},
+          {unit:7,kind:'p',question:'模型加入顧客來店意願後，廣告係數仍有星號。店員問：「這代表控制中介變項後，廣告的效果仍有統計證據嗎？」',options:[['是；在模型所控制的其他變項下，廣告係數仍達統計顯著',3000,4000],['不是；加入中介變項後所有係數都失效',-2000,-3000],['代表廣告效果完全等於 p-value',-1500,-2500],['代表顧客來店意願是依變項',-1000,-2000]]},
+          {unit:7,kind:'biz',question:'熟客回饋說，看到廣告後會先到店裡看看，若服務親切才會購買。報表也顯示來店意願能連結廣告與營業額，你會如何改善顧客體驗？',options:[['同步優化廣告訊息、店內接待與商品陳列',3000,4000],['只增加廣告曝光，不管進店後的體驗',-2500,-3500],['取消店員訓練並減少服務人力',-2000,-3000],['只追求進店人數，不關心商品品質',-1500,-2500]]},
+          {unit:8,kind:'p',question:'M8 報表中市場競爭係數為負，但沒有顯著星號。老闆問能否直接宣稱競爭一定會降低營業額？',options:[['不宜；係數方向是負，但目前統計證據未達顯著',3000,4000],['可以；負係數不論顯著與否都能證明效果',-2500,-3500],['可以；負號代表 p-value 小於零',-2000,-3000],['不可以；負係數代表資料輸入錯誤',-1000,-2000]]},
+          {unit:8,kind:'biz',question:'市場競爭變激烈，店裡的高品質水果仍受到熟客喜愛。老闆想打價格戰，你會如何運用報表資訊？',options:[['維持品質優勢，搭配有目標的促銷與熟客方案',3000,4000],['不計成本全面降價',-3000,-4000],['降低水果品質以追求最低價格',-2500,-3500],['完全忽略顧客回饋',-1500,-2500]]},
+          {unit:9,kind:'p',question:'M9 的交互作用項係數為負且達顯著。店長問這個結果是否表示廣告在任何情況下都會讓營業額下降？',options:[['不是；負向交互作用表示競爭提高時，廣告的正向效果會減弱',3000,4000],['是；廣告在所有市場都必然降低營業額',-2500,-3500],['是；交互作用係數就是廣告費用',-2000,-3000],['不是；交互作用項只用來計算樣本數',-1500,-2500]]},
+          {unit:9,kind:'biz',question:'競爭對手推出大量折扣，店裡的廣告轉換效果受到影響。你會如何調整策略，而不是陷入無止盡的價格戰？',options:[['強化差異化商品與會員關係，針對目標客群投放廣告',3000,4000],['跟進所有折扣，即使每筆交易都虧損',-3000,-4000],['把廣告預算全部取消',-2000,-3000],['不分析客群，持續複製對手活動',-1500,-2500]]},
+          {unit:10,kind:'p',question:'最後檢視 M10，顧客來店意願係數旁有星號。老闆問這能否證明顧客意願是唯一造成營業額變化的原因？',options:[['不能；顯著係數表示有統計證據，並不代表唯一原因或必然因果',3000,4000],['能；只要有星號就能證明唯一因果',-2500,-3500],['能；星號代表模型解釋率百分之百',-2000,-3000],['不能；迴歸分析完全不能提供任何資訊',-1500,-2500]]},
+          {unit:10,kind:'biz',question:'經過一整年的經營，報表指出廣告、品質與顧客來店意願都值得關注。你要向老闆提出年度總計畫，會選哪一項？',options:[['整合精準行銷、品質管理與顧客體驗，定期追蹤數據調整策略',4000,5000],['把所有資金投入一次性的豪華開幕活動',-3500,-4500],['不再查看報表，完全依照直覺經營',-3000,-4000],['大量削減品質與服務成本',-2500,-3500]]}
+        ];
+        const tableByUnit = [renderM1Table,renderM2Table,renderM3Table,renderM4Table,renderM5Table,renderQ16Table,renderQ19Table,renderQ22Table,renderQ25Table,renderQ28Table];
+        const modelByUnit = ['模型 M1','模型 M2','模型 M3','模型 M4','模型 M5','模型 M6','模型 M7','模型 M8','模型 M9','模型 M10'];
+        const equationByUnit = [
+          'Me = β₀ + e','Me = β₁₀ + β₁₁X + e<br>Me = β₁₀ + 0.48X + e','Me = β₂₀ + β₂₁X + β₂₂Mo + e','Me = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e','Y = β₁₀ + e','Y = β₁₀ + β₁₁X + e','Y = β₃₀ + β₃₁X + β₃₂Me + e','Y = β₂₀ + β₂₁X + β₂₂Mo + e','Y = β₃₀ + β₃₁X + β₃₂Mo + β₃₃XMo + e','Y = β₄₀ + 0.13X + 0.23Mo - 0.09XMo - 0.17Me + e'
+        ];
+        const questionBank = [...questions];
+        extraQuestions.forEach((item, i) => {
+          const u=item.unit-1;
+          questionBank.push({
+            modelTag:modelByUnit[u], renderTable:tableByUnit[u], eqText:equationByUnit[u],
+            question:item.question, bankId:`extra-${i}`,
+            options:item.options.map(([text,min,max])=>({text,getImpact:()=>getRandomVal(min,max)}))
+          });
+        });
+
+        function shuffleArray(array) {
+          const arr=[...array];
+          for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+          return arr;
+        }
+        const modeInfo={easy:{label:'簡單模式',loss:1,gain:1},hard:{label:'困難模式',loss:2,gain:1},extreme:{label:'超困難模式',loss:3,gain:.5}};
+        const SAVE_PREFIX='fruit-learning-game-v2-';
+        let currentMode='easy', currentFunds=5000, currentQIndex=0, isAnswered=false;
+        let selectedQuestionIds=[], chartData=new Array(30).fill(null), trendChart=null;
+        let currentOptionSet=[], pendingMode='easy';
+        const labels=Array.from({length:30},(_,i)=>`Q${i+1}`);
+        const saveKey=mode=>SAVE_PREFIX+mode;
+        function getSave(mode){try{return JSON.parse(localStorage.getItem(saveKey(mode))||'null')}catch(e){return null}}
+        function saveGame(){
+          if(!selectedQuestionIds.length)return;
+          const data={version:2,mode:currentMode,currentFunds,currentQIndex,isAnswered,selectedQuestionIds,chartData,currentOptionSet,answeredImpact:window.lastImpact??null,answeredText:window.lastAnswerText??null};
+          try{localStorage.setItem(saveKey(currentMode),JSON.stringify(data));}catch(e){console.warn('存檔失敗',e)}
+          updateSavedSummary();
+        }
+        function updateSavedSummary(){
+          const el=document.getElementById('saved-summary'); if(!el)return;
+          const saves=Object.keys(modeInfo).map(m=>({m,s:getSave(m)})).filter(x=>x.s&&!x.s.finished);
+          el.textContent=saves.length?'💾 已有未完成進度：'+saves.map(x=>`${modeInfo[x.m].label}（第 ${x.s.currentQIndex+1} 題）`).join('、'):'每種難度都會自動保存進度。';
+        }
+        function showMainMenu(){hideAllScreens();document.getElementById('main-menu').classList.remove('hidden');document.getElementById('main-menu').classList.add('flex');document.getElementById('bgm').pause();updateSavedSummary()}
+        function showModeSelect(){hideAllScreens();document.getElementById('mode-screen').classList.remove('hidden');document.getElementById('mode-screen').classList.add('flex');const audio=document.getElementById('bgm');audio.play().catch(()=>{})}
+        function hideAllScreens(){['main-menu','mode-screen','game-screen'].forEach(id=>{const e=document.getElementById(id);e.classList.add('hidden');e.classList.remove('flex')})}
+        function openRules(){document.getElementById('rules-overlay').classList.add('show')}
+        function closeOverlay(id){document.getElementById(id).classList.remove('show')}
+        function chooseMode(mode){currentMode=mode;const save=getSave(mode);if(save&&!save.finished){pendingMode=mode;document.getElementById('resume-description').textContent=`${modeInfo[mode].label}：目前進度第 ${save.currentQIndex+1} / 30 題，資金 $${Number(save.currentFunds).toLocaleString()}。要接續上次的經營，還是重新開始？`;document.getElementById('resume-overlay').classList.add('show')}else{pendingMode=mode;startFreshGame()}}
+        function resumeSavedGame(){closeOverlay('resume-overlay');currentMode=pendingMode;const s=getSave(currentMode);if(!s)return startFreshGame();currentFunds=s.currentFunds;currentQIndex=s.currentQIndex;isAnswered=!!s.isAnswered;selectedQuestionIds=s.selectedQuestionIds;chartData=s.chartData||new Array(30).fill(null);currentOptionSet=s.currentOptionSet||[];window.lastImpact=s.answeredImpact;window.lastAnswerText=s.answeredText;enterGame();loadQuestion(currentQIndex,true)}
+        function startFreshGame(){closeOverlay('resume-overlay');currentMode=pendingMode;currentFunds=5000;currentQIndex=0;isAnswered=false;chartData=new Array(30).fill(null);chartData[0]=5000;window.lastImpact=null;window.lastAnswerText=null;
+          selectedQuestionIds=[];
+          for(let u=0;u<10;u++){const ids=[u*3,u*3+1,u*3+2,30+(u*2),30+(u*2+1)];selectedQuestionIds.push(...shuffleArray(ids).slice(0,3));}
+          // Randomize order within each three-question block as well.
+          const reordered=[];for(let u=0;u<10;u++)reordered.push(...shuffleArray(selectedQuestionIds.slice(u*3,u*3+3)));selectedQuestionIds=reordered;
+          currentOptionSet=[];saveGame();enterGame();loadQuestion(0);
+        }
+        function enterGame(){hideAllScreens();document.getElementById('game-screen').classList.remove('hidden');document.getElementById('bgm').play().catch(()=>{});document.getElementById('funds-display').textContent=`$${currentFunds.toLocaleString()}`;if(!trendChart)initChart();setTimeout(()=>{if(trendChart)trendChart.resize()},80)}
+        function backToModes(){saveGame();showModeSelect()}
+        function returnToMenu(){closeOverlay('result-overlay');showMainMenu()}
+        function replayCurrentMode(){closeOverlay('result-overlay');pendingMode=currentMode;startFreshGame()}
+        function loadQuestion(index,restoring=false){
+          if(index>=30){finishGame(false);return;}
+          if(!restoring)isAnswered=false;
+          const q=questionBank[selectedQuestionIds[index]];
+          if(!q){console.error('題目資料不存在：',index,selectedQuestionIds[index]);document.getElementById('question-text').textContent='題目載入失敗，請返回主畫面重新開始。';return;}
+          document.getElementById('progress-text').textContent=`Q${index+1} / 30`;
+          document.getElementById('model-tag').textContent=q.modelTag;
+          document.getElementById('question-text').textContent=q.question;
+          document.getElementById('report-container').innerHTML=q.renderTable();
+          document.getElementById('equation-container').innerHTML=q.eqText;
+          const fb=document.getElementById('feedback-box');fb.className='hidden mt-4 p-3 rounded-lg border text-sm font-medium transition-all';
+          document.getElementById('next-btn').disabled=true;
+          if(!restoring||!currentOptionSet.length){currentOptionSet=shuffleArray(q.options.map(o=>({text:o.text,impact:scaleImpact(o.getImpact())})));}
+          renderOptions();
+          document.getElementById('funds-display').textContent=`$${currentFunds.toLocaleString()}`;
+          if(isAnswered)restoreFeedback();
+          updateChart();saveGame();
+        }
+        function scaleImpact(raw){const m=modeInfo[currentMode];if(raw<0)return -Math.abs(raw)*m.loss;if(raw>0)return Math.round(raw*m.gain);return 0}
+        function renderOptions(){const box=document.getElementById('options-container');box.innerHTML='';currentOptionSet.forEach((opt,idx)=>{const b=document.createElement('button');b.className='opt-btn text-left p-3.5 rounded-lg border transition-all text-sm font-medium flex justify-between items-center group';b.innerHTML=`<span><strong class="text-orange-700 mr-2">${String.fromCharCode(65+idx)}.</strong> ${opt.text}</span>`;b.onclick=()=>selectOption(b,opt.impact,opt.text);if(isAnswered){b.disabled=true;b.classList.add('opacity-60','cursor-not-allowed');}box.appendChild(b)});}
+        function restoreFeedback(){document.querySelectorAll('.opt-btn').forEach(b=>{if(b.textContent.includes(window.lastAnswerText||'\u0000'))b.classList.add('ring-2','ring-orange-400','border-orange-400')});const fb=document.getElementById('feedback-box');fb.classList.remove('hidden');const impact=window.lastImpact||0;if(impact>0){fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-emerald-50 border-emerald-400 text-emerald-800';fb.innerHTML=`✅ 決策成功！資金變動：<strong>+$${impact.toLocaleString()}</strong>`}else if(impact<0){fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-rose-50 border-rose-400 text-rose-800';fb.innerHTML=`⚠️ 決策失誤！資金變動：<strong>-$${Math.abs(impact).toLocaleString()}</strong>`}else{fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-slate-100 border-slate-300 text-slate-700';fb.textContent='ℹ️ 決策中立，資金持平。'}document.getElementById('next-btn').disabled=false;}
+        function selectOption(selectedBtn,impactVal,optText){if(isAnswered)return;isAnswered=true;window.lastImpact=impactVal;window.lastAnswerText=optText;document.querySelectorAll('.opt-btn').forEach(b=>{b.disabled=true;b.classList.add('opacity-60','cursor-not-allowed')});currentFunds+=impactVal;chartData[currentQIndex]=currentFunds;document.getElementById('funds-display').textContent=`$${currentFunds.toLocaleString()}`;selectedBtn.classList.remove('opacity-60');
+          const fb=document.getElementById('feedback-box');fb.classList.remove('hidden');
+          if(impactVal>0){selectedBtn.classList.add('border-emerald-500','bg-emerald-50','text-emerald-900');fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-emerald-50 border-emerald-400 text-emerald-800';fb.innerHTML=`✅ 決策成功！資金變動：<strong>+$${impactVal.toLocaleString()}</strong>`}
+          else if(impactVal<0){selectedBtn.classList.add('border-rose-500','bg-rose-50','text-rose-900');fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-rose-50 border-rose-400 text-rose-800';fb.innerHTML=`⚠️ 決策失誤！資金變動：<strong>-$${Math.abs(impactVal).toLocaleString()}</strong>`}
+          else{selectedBtn.classList.add('border-slate-400','bg-slate-100','text-slate-800');fb.className='mt-4 p-3 rounded-lg border text-sm font-medium bg-slate-100 border-slate-300 text-slate-700';fb.textContent='ℹ️ 決策中立，資金持平。'}
+          document.getElementById('next-btn').disabled=false;updateChart();saveGame();if(currentFunds<=0){setTimeout(()=>finishGame(true),450)}
+        }
+        function nextQuestion(){if(!isAnswered)return;if(currentFunds<=0){finishGame(true);return;}currentQIndex++;isAnswered=false;currentOptionSet=[];window.lastImpact=null;window.lastAnswerText=null;if(currentQIndex>=30){finishGame(false);return;}saveGame();loadQuestion(currentQIndex)}
+        function finishGame(bankrupt){const result=bankrupt||currentFunds<=0;const f=Math.max(0,currentFunds);let title,story,emoji;
+          if(result){emoji='🥀';title='水果店暫時歇業';story='資金已經見底，店裡的燈慢慢熄了。老闆和店員決定先整理這段經營歷程，重新檢視報表、成本與每一次選擇。一次挫折不是終點，下一次可以用更好的數據判斷重新出發。'}
+          else if(f<10000){emoji='🍊';title='勉強撐住的小攤車';story='三十道考驗終於完成！雖然資金不多，水果攤仍靠著熟客支持繼續營業。老闆決定先穩住品質與現金流，慢慢累積實力。'}
+          else if(f<20000){emoji='🍎';title='街坊最熟悉的水果店';story='你的店在社區站穩腳步，街坊鄰居經常上門採買。穩定的服務與持續改善，讓這家小店成為居民生活的一部分。'}
+          else if(f<30000){emoji='🍍';title='人氣水果名店';story='越來越多人專程來店裡挑選水果。你善用報表掌握顧客需求，也沒有忘記品質與服務，水果店成為附近最受歡迎的店家之一。'}
+          else if(f<40000){emoji='🍉';title='城市水果品牌新星';story='你的水果店已經成為城市裡頗具知名度的品牌。穩健的行銷、品質管理與顧客經營，讓店面開始有能力拓展新的商圈。'}
+          else if(f<50000){emoji='🏬';title='區域連鎖水果王國';story='從一間小店到多家分店，你成功建立區域連鎖品牌。每間店都依據數據調整經營策略，讓新鮮水果與好服務走進更多家庭。'}
+          else{emoji='👑';title='全台水果產業霸主';story='不可思議！你帶領水果店成為全台知名的水果產業霸主。你不只懂得解讀統計模型，更能把數據轉化為真正有效的經營決策。'}
+          document.getElementById('result-emoji').textContent=emoji;document.getElementById('result-title').textContent=title;document.getElementById('result-story').textContent=story;document.getElementById('result-funds').textContent=`$${currentFunds.toLocaleString()}`;document.getElementById('result-mode').textContent=modeInfo[currentMode].label+(result?'・挑戰中止':'・完成 30 題');document.getElementById('result-overlay').classList.add('show');
+          try{const old=getSave(currentMode)||{};localStorage.setItem(saveKey(currentMode),JSON.stringify({...old,version:2,mode:currentMode,currentFunds,currentQIndex,selectedQuestionIds,chartData,finished:true,bankrupt:result,ending:title}))}catch(e){}
+        }
+        function initChart(){
+          /* 圖表 CDN 若載入失敗，不可因此阻止題目與選項顯示 */
+          if(typeof Chart==='undefined'){console.warn('Chart.js 未載入，略過趨勢圖；遊戲題目仍可正常進行。');return;}
+          const canvas=document.getElementById('trendChart');if(!canvas)return;
+          const ctx=canvas.getContext('2d');trendChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'現有資金 ($)',data:chartData,borderColor:'#e98b35',backgroundColor:'rgba(245,158,11,.14)',borderWidth:3,pointRadius:3,pointBackgroundColor:'#e98b35',tension:.25,spanGaps:false}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{grid:{color:'rgba(120,100,70,.10)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(120,100,70,.10)'},ticks:{color:'#64748b',font:{size:10}}}},plugins:{legend:{display:false}}}})
+        }
+        function updateChart(){if(trendChart){trendChart.data.datasets[0].data=chartData;trendChart.update()}}
+        function restoreHomeIfAny(){updateSavedSummary();showMainMenu()}
+        window.addEventListener('beforeunload',saveGame);
+        window.onload=()=>{restoreHomeIfAny()};
+    </script>
+</body>
+</html>
